@@ -68,9 +68,13 @@ def get_vectorstore(text_chunks):
     return vectordb
 
 
-def get_conversation_chain(vetorestore, openai_api_key):
+# 사이드 바의 LLM 옵션 받기 위해 수정
+def get_conversation_chain(vetorestore, openai_api_key, llm_option_1, llm_option_2):
     llm = ChatOpenAI(
-        openai_api_key=openai_api_key, model_name="gpt-3.5-turbo", temperature=0
+        openai_api_key=openai_api_key,
+        model_name="gpt-3.5-turbo",
+        temperature=llm_option_1,
+        max_tokens=llm_option_2,
     )
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
@@ -87,14 +91,13 @@ def get_conversation_chain(vetorestore, openai_api_key):
 
 
 def main():
-
     st.set_page_config(page_title="~AI 챗봇", page_icon=":books:")
 
     st.title("_개인 데이터 :red[QA 채팅]_ :books:")
 
     st.divider()
 
-    st.subheader('안녕하세요?  ~ 상담 AI 챗봇입니다 ... ')
+    st.subheader("안녕하세요?  ~ 상담 AI 챗봇입니다 ... ")
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
@@ -105,6 +108,7 @@ def main():
     if "processComplete" not in st.session_state:
         st.session_state.processComplete = None
 
+    # 사이드 바, 탭 추가
     with st.sidebar:
         sidebar_tab1, sidebar_tab2 = st.tabs(["기본 탭", "추가 탭"])
 
@@ -122,14 +126,31 @@ def main():
 
             st.divider()
 
-            llm_option1_slider = st.slider("LLM 옵션1을 설정하세요", value=80)
+            # llm 옵션 추가
+            llm_option1 = st.slider(
+                "LLM 옵션1을 설정하세요",
+                min_value=0.0,
+                max_value=2.0,
+                value=1.0,
+                step=0.1,
+            )
 
-            llm_option2_slider = st.slider("LLM 옵션2를 설정하세요", value=20)
+            st.write("위 옵션 값이 높을 수록 다양한 답변을 생성합니다.")
+            print("option 1: ", llm_option1)
+
+            # st.divider()
+
+            llm_option2 = st.select_slider(
+                "LLM 옵션2를 설정하세요", options=[128, 256, 512, 1024, 2048]
+            )
+            st.write("위 옵션 값에 따라 최대 생성 문자 수가 결정됩니다.")
+            print("option 2: ", llm_option2)
 
             st.divider()
 
             st.markdown("#### API Key를 발급받는 방법")
 
+            # API Key 발급 링크로 연결
             if st.button("OpenAI API Key"):
                 url = "https://m.blog.naver.com/mynameistk/223062993136"
                 webbrowser.open_new_tab(url)
@@ -148,7 +169,9 @@ def main():
 
     if process:
         if not openai_api_key:
-            st.info("계속하려면 OpenAI API 키를 추가하세요.")  # Please add your OpenAI API key to continue.
+            st.info(
+                "계속하려면 OpenAI API 키를 추가하세요."
+            )  # Please add your OpenAI API key to continue.
             st.stop()
         files_text = get_text(uploaded_files)
         text_chunks = get_text_chunks(files_text)
@@ -173,11 +196,11 @@ def main():
 
     history = StreamlitChatMessageHistory(key="chat_messages")
 
-    if llm_option1_slider:
-        pass
+    # if llm_option1_slider:
+    #     pass
 
-    if llm_option2_slider:
-        pass
+    # if llm_option2_slider:
+    #     pass
 
     # Chat logic
     if query := st.chat_input("질문을 입력해주세요."):

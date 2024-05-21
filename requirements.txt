@@ -1,5 +1,7 @@
-# pysqlite3-binary
+streamlit
 langchain
+langchain-openai
+langchain-community
 chromadb
 unstructured
 sentence-transformers
@@ -9,3 +11,4 @@ openai
 pypdf
 loguru
 docx2txt
+pykospacing @ git+https://github.com/haven-jeon/PyKoSpacing.git@103ff614a2edf6df87d289ccaf99822b9afa9a42

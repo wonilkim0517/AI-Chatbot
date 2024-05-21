@@ -2,14 +2,14 @@
 
 
 
-# run
+# Run
+1.
+```pwsh
+pip install -r requirements.txt
+```
+2.
 ```pwsh
 streamlit run streamlit_main.py
 ```
 
 
-### pykospacing 설치
-
-```pwsh
-pip install git+https://github.com/haven-jeon/PyKoSpacing.git
-```

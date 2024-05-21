@@ -1,2 +1,5 @@
 .env
 langchain_main.py
+utils/
+datas/*.pdf
+previous.py

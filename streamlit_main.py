@@ -143,13 +143,13 @@ def get_conversation_chain(vetorestore, openai_api_key, llm_option_1, llm_option
 
 
 def main(origin_path, copy_path, top_k):
-    st.set_page_config(page_title="AI 챗봇")
+    st.set_page_config(page_title="삼육대학교 AI 챗봇")
 
-    st.title("_개인 데이터 :red[QA 채팅]_ :books:")
+    st.title("_의료 데이터 :red[QA 채팅]_ :books:")
 
     st.divider()
 
-    st.subheader("안녕하세요?  ~ 상담 AI 챗봇입니다 ... ")
+    st.subheader("안녕하세요? 어린이 질병 AI 챗봇입니다 ... ")
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
@@ -253,12 +253,12 @@ def main(origin_path, copy_path, top_k):
     if query := st.chat_input("질문을 입력해주세요."):
         print("query", query)
 
-        template = """ 당신은 삼육대학교 컴퓨터공학부의 세칙에 대해 대답하는 챗봇입니다. 주어진 문서에 있는 내용으로 대답하시오.
+        template = """ 당신은 어린이 질병 혹은 영유아 질병에 대해 대답하는 챗봇입니다. 주어진 문서에 있는 내용으로 대답하세요.
         만약 문서에 없는 내용이면 문서에 존재하지 않는다고 답변하세요. 모른다고 지어내서 말하지 말하세요.
         File Name : 을 참조해서 어떤 절차에 대한 문서인지 파악하고 질문과 동일한 절차의 내용만 사용하세요.
         질문 : {query}
         너의 답변 : """
-        
+
         prompt_template = PromptTemplate(input_variables=["context", "query"], template=template)
         prompt = (prompt_template.format(query=query))
         print(prompt)

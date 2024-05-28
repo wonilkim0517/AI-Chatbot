@@ -19,7 +19,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.memory import ConversationBufferMemory
 from langchain.memory import StreamlitChatMessageHistory
 from langchain.callbacks import get_openai_callback
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 from sentence_transformers import SentenceTransformer, util
 
@@ -55,7 +55,7 @@ def chg_itemname(itemnames):
 # 가져온 파일을 DOC 폴더로 넣기
 def copy_files_to_another_folder(
     source_folder, target_folder, files_to_copy
-):  
+        ):
     if not os.path.exists(target_folder):  # 대상 폴더가 없으면 생성 / 폴더가 있으면 내용 비우기
         os.makedirs(target_folder, exist_ok=True)
     else:
@@ -74,7 +74,6 @@ def copy_files_to_another_folder(
 
 # BERT 토크나이저를 이용한 한글 토큰 추출 함수
 def extract_korean_tokens(text):
-    # print('토큰 추출', text)
     tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
     tokens = tokenizer.tokenize(text)
     korean_tokens = [token for token in tokens if re.match("^[가-힣]+$", token)]
@@ -83,7 +82,6 @@ def extract_korean_tokens(text):
 
 # 띄어쓰기 오류 교정 함수
 def correct_spacing(text):
-    # print('띄어쓰기 교정', text)
     spacing = Spacing()
     corrected_text = spacing(text)
     return corrected_text
@@ -92,14 +90,13 @@ def correct_spacing(text):
 # 불완전 문장 처리 함수
 def complete_sentence(text):
     # 문장의 끝에 마침표가 없으면 추가
-    # print("불완전 처리: ", text)
     if text[-1] not in [".", "?", "!"]:
         text += "."
     return text
 
 
 # 길이 기반 필터링 함수
-def length_based_filtering(text, min_length=10):
+def length_based_filtering(text, min_length=8):
     if len(text) > min_length:
         return text
     else:
@@ -189,14 +186,12 @@ def main(origin_path, copy_path, top_k):
                 "Temperature를 설정하세요",
                 min_value=0.0,
                 max_value=2.0,
-                value=1.0,
+                value=0.5,
                 step=0.1,
             )
 
             st.write("위 옵션 값이 높을 수록 다양한 답변을 생성합니다.")
             print("option 1: ", llm_option1)
-
-
 
             llm_option2 = st.select_slider(
                 "max_tokens를 설정하세요", options=[128, 256, 512, 1024, 2048]
@@ -258,19 +253,20 @@ def main(origin_path, copy_path, top_k):
     if query := st.chat_input("질문을 입력해주세요."):
         print("query", query)
 
-        # template = """ 당신은 의학에 대해 대답하는 챗봇입니다. 주어진 문서에 있는 내용으로 대답하시오.
-        # 만약 문서에 없는 내용이면 문서에 존재하지 않는다고 답변하세요. 모른다고 지어내서 말하지 말하세요.
-        # File Name : 을 참조해서 어떤 절차에 대한 문서인지 파악하고 질문과 동일한 절차의 내용만 사용하세요.
-        # {context}
-        # 질문 : {query}
-        # 너의 답변 : """
-
-        # prompt = PromptTemplate(input_variables= ["context", "query"], template=template) -> !TODO prompt.메소드로 넣어야함 수정필요
-
+        template = """ 당신은 삼육대학교 컴퓨터공학부의 세칙에 대해 대답하는 챗봇입니다. 주어진 문서에 있는 내용으로 대답하시오.
+        만약 문서에 없는 내용이면 문서에 존재하지 않는다고 답변하세요. 모른다고 지어내서 말하지 말하세요.
+        File Name : 을 참조해서 어떤 절차에 대한 문서인지 파악하고 질문과 동일한 절차의 내용만 사용하세요.
+        질문 : {query}
+        너의 답변 : """
+        
+        prompt_template = PromptTemplate(input_variables=["context", "query"], template=template)
+        prompt = (prompt_template.format(query=query))
+        print(prompt)
         embedded_filename = st.session_state["embedded_filename"]
 
         # 질문과 유사한 파일을 고르고, 고른 파일만 가져옴
-        question_embedding = embedder.encode(query, convert_to_tensor=True)
+        question_embedding = embedder.encode(prompt, convert_to_tensor=True)
+        # question_embedding = embedder.encode(query, convert_to_tensor=True)
         cos_scores = util.pytorch_cos_sim(question_embedding, embedded_filename).cpu()
         top_results = np.argpartition(-cos_scores, range(top_k))[
             0:top_k
@@ -297,10 +293,9 @@ def main(origin_path, copy_path, top_k):
 
             cleaned_text = f"File Name: {file_name} \n"
 
-            print('page content', type(page_content), page_content)  # <- 디버그용
-
-            cleaned_text = preprocess_with_bert_embedding(page_content)  # <- !TODO 사용시 정확도가 너무 낮음
-            # cleaned_text = page_content
+            # cleaned_text = preprocess_with_bert_embedding(page_content)  # <- !TODO 사용시 정확도가 너무 낮음
+            # print(cleaned_text)
+            cleaned_text = page_content
             cleaned_document.page_content = cleaned_text
             cleaned_documents.append(cleaned_document)
 
@@ -361,7 +356,3 @@ if __name__ == "__main__":
     DOC_PATH = "./docs/"
 
     main(DATA_PATH, DOC_PATH, top_k)
-
-# !TODO
-# 템플릿 이용하여 질문받기
-# BERT 정확도 높이기

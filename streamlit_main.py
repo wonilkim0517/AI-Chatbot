@@ -176,7 +176,7 @@ def main(origin_path, copy_path, top_k):
             if clicked:
                 dirname = st.text_input('선택한 폴더의 경로:', filedialog.askdirectory(master=root))
                 uploaded_files = get_pdf_files(dirname)
-                # print(uploaded_files)
+
                 st.session_state["uploaded_files"] = uploaded_files
 
             st.divider()
@@ -236,6 +236,7 @@ def main(origin_path, copy_path, top_k):
         modified_files = remove_underscore_after_pdf(uploaded_files)
         pdf_files_name = chg_itemname(modified_files)
 
+
         filename_embeddings = embedder.encode(pdf_files_name, convert_to_tensor=True)
 
         st.session_state["embedded_filename"] = filename_embeddings
@@ -273,7 +274,6 @@ def main(origin_path, copy_path, top_k):
 
         # 질문과 유사한 파일을 고르고, 고른 파일만 가져옴
         question_embedding = embedder.encode(prompt, convert_to_tensor=True)
-        # question_embedding = embedder.encode(query, convert_to_tensor=True)
         cos_scores = util.pytorch_cos_sim(question_embedding, embedded_filename).cpu()
         top_results = np.argpartition(-cos_scores, range(top_k))[
             0:top_k
@@ -282,7 +282,6 @@ def main(origin_path, copy_path, top_k):
         files_to_copy = []
         for idx in top_results[0][0:top_k]:
             files_to_copy.append(uploaded_files[idx])
-
         copy_files_to_another_folder(origin_path, copy_path, files_to_copy)
 
         loader = PyPDFDirectoryLoader(copy_path)
@@ -339,16 +338,11 @@ def main(origin_path, copy_path, top_k):
                     st.session_state.chat_history = result["chat_history"]
                 response = result["answer"]
                 source_documents = result["source_documents"]
-
                 st.markdown(response)
                 with st.expander("참고 문서 확인"):
                     st.markdown(
                         source_documents[0].metadata["source"],
                         help=source_documents[0].page_content,
-                    )
-                    st.markdown(
-                        source_documents[1].metadata["source"],
-                        help=source_documents[1].page_content,
                     )
 
         # Add assistant message to chat history
@@ -356,7 +350,7 @@ def main(origin_path, copy_path, top_k):
 
 
 if __name__ == "__main__":
-    top_k = 2
+    top_k = 1
     DATA_PATH = "./datas/"
     DOC_PATH = "./docs/"
 

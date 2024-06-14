@@ -3,6 +3,8 @@ import re
 import shutil
 import webbrowser
 import unicodedata
+import tkinter as tk
+from tkinter import filedialog
 
 import numpy as np
 import streamlit as st
@@ -165,19 +167,17 @@ def main(origin_path, copy_path, top_k):
         sidebar_tab1, sidebar_tab2 = st.tabs(["기본 탭", "추가 탭"])
 
         with sidebar_tab1:
-            directory_path = st.text_input("디렉토리 경로를 입력하세요.")
-            if os.path.isdir(directory_path):
-                uploaded_files = get_pdf_files(directory_path)
-            else:
-                st.warning("유효한 디렉토리 경로를 입력하세요.")
-                uploaded_files = None
+            root = tk.Tk()
+            root.withdraw()
+            root.wm_attributes('-topmost', 1)
 
-            st.divider()
+            clicked = st.button('폴더를 선택하세요')
 
-            openai_api_key = st.text_input(
-                "OpenAI API Key를 입력하세요", key="chatbot_api_key", type="password"
-            )
-            process = st.button("OpenAI API Key 적용")
+            if clicked:
+                dirname = st.text_input('선택한 폴더의 경로:', filedialog.askdirectory(master=root))
+                uploaded_files = get_pdf_files(dirname)
+                # print(uploaded_files)
+                st.session_state["uploaded_files"] = uploaded_files
 
             st.divider()
 
@@ -189,15 +189,19 @@ def main(origin_path, copy_path, top_k):
                 value=0.5,
                 step=0.1,
             )
-
             st.write("위 옵션 값이 높을 수록 다양한 답변을 생성합니다.")
-            print("option 1: ", llm_option1)
 
             llm_option2 = st.select_slider(
                 "max_tokens를 설정하세요", options=[128, 256, 512, 1024, 2048]
             )
             st.write("위 옵션 값에 따라 최대 생성 문자 수가 결정됩니다.")
-            print("option 2: ", llm_option2)
+
+            st.divider()
+
+            openai_api_key = st.text_input(
+                "OpenAI API Key를 입력하세요", key="chatbot_api_key", type="password"
+            )
+            process = st.button("OpenAI API Key 적용")
 
             st.divider()
 
@@ -218,16 +222,17 @@ def main(origin_path, copy_path, top_k):
 
         with sidebar_tab2:
             st.header("추가 탭 1")
-            st.markdown("#### 아직 기능을 구현하는 중입니다")
+            st.markdown("#### 아직 기능을 구현하는 중입니다..")
 
     embedder = SentenceTransformer("jhgan/ko-sroberta-multitask")
+
     if process:
         if not openai_api_key:
             st.info(
                 "계속하려면 OpenAI API 키를 추가하세요."
             )
             st.stop()
-
+        uploaded_files = st.session_state["uploaded_files"]
         modified_files = remove_underscore_after_pdf(uploaded_files)
         pdf_files_name = chg_itemname(modified_files)
 
@@ -262,7 +267,9 @@ def main(origin_path, copy_path, top_k):
         prompt_template = PromptTemplate(input_variables=["context", "query"], template=template)
         prompt = (prompt_template.format(query=query))
         print(prompt)
+
         embedded_filename = st.session_state["embedded_filename"]
+        uploaded_files = st.session_state["uploaded_files"]
 
         # 질문과 유사한 파일을 고르고, 고른 파일만 가져옴
         question_embedding = embedder.encode(prompt, convert_to_tensor=True)
@@ -293,8 +300,6 @@ def main(origin_path, copy_path, top_k):
 
             cleaned_text = f"File Name: {file_name} \n"
 
-            # cleaned_text = preprocess_with_bert_embedding(page_content)  # <- !TODO 사용시 정확도가 너무 낮음
-            # print(cleaned_text)
             cleaned_text = page_content
             cleaned_document.page_content = cleaned_text
             cleaned_documents.append(cleaned_document)

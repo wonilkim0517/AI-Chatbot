@@ -12,5 +12,5 @@ pip install -r requirements.txt
 streamlit run streamlit_main.py
 ```
 
-* python >= 3.8
+* python >= 3.10
 
